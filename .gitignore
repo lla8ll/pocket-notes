@@ -1,0 +1,24 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env*
+.DS_Store
+Thumbs.db
+coverage/
+*.log
+
+# Local credentials, signing material and editor-specific files.
+.npmrc
+.netrc
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+secrets*.json
+.vercel/
+.idea/
+.vscode/
+.cache/
+__pycache__/
+.venv/

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Development data checks</title>
+<style>body{font:16px sans-serif;padding:24px;max-width:850px}button,a{display:inline-block;padding:12px;margin:5px}pre{white-space:pre-wrap;overflow-wrap:anywhere}textarea{width:100%;height:250px}</style>
+<h1>Development data checks</h1>
+<p>Local test origin only. These controls save test notes after retaining the previous development data for restoration.</p>
+<button id="legacy">Load legacy notes</button>
+<button id="expiry">Load expiry notes</button>
+<button id="damaged">Load damaged data</button>
+<button id="inspect">Inspect saved data</button>
+<button id="restore">Restore previous development data</button>
+<a href="/">Open Notes</a>
+<p id="status" role="status">Ready.</p>
+<pre id="output"></pre>
+<label for="paste">Paste check</label><textarea id="paste"></textarea>
+<script type="module">
+  const key = 'classic-pocket-notes:v1';
+  const backupKey = 'classic-notes-test-backup';
+  const day = 86400000;
+  function load(data, label) {
+    if (sessionStorage.getItem(backupKey) === null) {
+      sessionStorage.setItem(backupKey, JSON.stringify({ raw: localStorage.getItem(key) }));
+    }
+    localStorage.setItem(key, JSON.stringify(data));
+    document.querySelector('#status').textContent = label;
+    document.querySelector('#output').textContent = '';
+  }
+  document.querySelector('#legacy').onclick = () => {
+    const now = Date.now();
+    const stamp = (days) => new Date(now - days * day).toISOString();
+    load({ version: 1, notes: [
+      { id: 'qa-legacy-a', content: 'Shopping List\nMilk and bread', createdAt: stamp(4), updatedAt: stamp(2) },
+      { id: 'qa-legacy-b', content: 'Weekend\nGo SHOPPING on Friday', createdAt: stamp(4), updatedAt: stamp(1) },
+      { id: 'qa-legacy-ar', content: '\n  أفكاري اليومية\nقراءة كتاب\n  سطر أخير 📝\n', createdAt: stamp(4), updatedAt: stamp(3), extraMetadata: { keep: true } }
+    ] }, 'Legacy notes loaded.');
+  };
+  document.querySelector('#expiry').onclick = () => {
+    const now = Date.now();
+    const stamp = (days) => new Date(now - days * day).toISOString();
+    const base = { createdAt: stamp(40), updatedAt: stamp(37), isPinned: false, deletedAt: null };
+    load({ version: 2, notes: [
+      { ...base, id: 'qa-active', content: 'Keep this active note' },
+      { ...base, id: 'qa-expired', content: 'Expired after 35 days', deletedAt: stamp(35) },
+      { ...base, id: 'qa-boundary', content: 'Exactly 30 days old', deletedAt: stamp(30) },
+      { ...base, id: 'qa-last-day', content: 'One day remaining', deletedAt: stamp(29) },
+      { ...base, id: 'qa-fresh', content: 'Fresh deleted note\nKeep the pin', deletedAt: stamp(0), isPinned: true }
+    ] }, 'Expiry notes loaded.');
+  };
+  document.querySelector('#damaged').onclick = () => load({ version: 1, notes: [
+    { id: 'qa-valid', content: 'Preserve this original', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { id: 'qa-damaged', content: 42 }
+  ] }, 'Partially damaged data loaded.');
+  document.querySelector('#inspect').onclick = () => {
+    document.querySelector('#output').textContent = localStorage.getItem(key) ?? '(empty storage)';
+    document.querySelector('#status').textContent = 'Stored data shown below.';
+  };
+  document.querySelector('#restore').onclick = () => {
+    const backup = sessionStorage.getItem(backupKey);
+    if (backup !== null) {
+      const { raw } = JSON.parse(backup);
+      if (raw === null) localStorage.removeItem(key); else localStorage.setItem(key, raw);
+      sessionStorage.removeItem(backupKey);
+    }
+    document.querySelector('#output').textContent = '';
+    document.querySelector('#status').textContent = 'Previous development data restored.';
+  };
+</script>
+</html>

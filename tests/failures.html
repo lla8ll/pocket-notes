@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Development-only failure checks</title>
+<style>
+  body { margin: 20px; font: 15px/1.45 system-ui, sans-serif; color: #182535; background: #eef1f4; }
+  h1 { font-size: 22px; margin-bottom: 8px; }
+  h2 { font-size: 17px; margin: 0 0 8px; }
+  main { display: flex; align-items: flex-start; gap: 24px; flex-wrap: wrap; }
+  .controls { max-width: 590px; }
+  section { background: white; padding: 16px; margin-bottom: 16px; border-radius: 8px; }
+  button { padding: 10px 12px; margin: 4px; font: inherit; cursor: pointer; }
+  button:disabled { cursor: default; }
+  output { display: block; margin-top: 12px; font-family: monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+  iframe { border: 1px solid #687384; background: white; width: 390px; height: 740px; max-width: 100%; }
+  ol { padding-left: 22px; }
+</style>
+<h1>Development-only failure checks</h1>
+<p>This page changes only temporary browser methods in the app frame. It does not seed, clear, or replace saved notes. Edit a disposable test note through the app.</p>
+<main>
+  <div class="controls">
+    <section aria-labelledby="storage-heading">
+      <h2 id="storage-heading">Save failures and reload protection</h2>
+      <button id="fail-writes" disabled>Force save failure</button>
+      <button id="restore-writes" disabled>Restore writes</button>
+      <button id="check-unload" disabled>Check unload guard</button>
+      <output id="storage-status" aria-live="polite">Waiting for app.</output>
+      <output id="unload-status" aria-live="polite">Unload guard: not checked.</output>
+      <ol>
+        <li>Save a normal edit, then check: defaultPrevented should be false.</li>
+        <li>Force save failure and edit the note, then check: defaultPrevented should be true.</li>
+        <li>Restore writes, press Retry inside the app, then check: defaultPrevented should be false.</li>
+      </ol>
+      <p>The check dispatches a synthetic cancelable event; it never reloads the app or opens a native confirmation.</p>
+    </section>
+    <section aria-labelledby="clipboard-heading">
+      <h2 id="clipboard-heading">Delayed clipboard completion</h2>
+      <button id="defer-clipboard" disabled>Enable deferred clipboard</button>
+      <button id="resolve-first" disabled>Resolve oldest copy</button>
+      <button id="resolve-latest" disabled>Resolve latest copy</button>
+      <button id="restore-clipboard" disabled>Restore clipboard</button>
+      <output id="clipboard-status" aria-live="polite">Clipboard: original behavior.</output>
+      <ol>
+        <li>Enable deferred clipboard, then open Share Note and press Copy Note in the app.</li>
+        <li>Cancel the sheet, reopen Share Note, and start another copy.</li>
+        <li>Resolve the oldest copy: the new sheet must stay open and busy.</li>
+        <li>Resolve the latest copy: the current sheet should close with Copied feedback.</li>
+      </ol>
+      <p>Mock copies stay in memory and never change the system clipboard.</p>
+    </section>
+    <p id="status" role="status">Loading app frame.</p>
+    <a href="/">Open Pocket Notes directly</a>
+  </div>
+  <iframe id="app-frame" title="Pocket Notes failure test" src="/"></iframe>
+</main>
+<script type="module">
+  const storageKey = 'classic-pocket-notes:v1';
+  const frame = document.querySelector('#app-frame');
+  const status = document.querySelector('#status');
+  const storageStatus = document.querySelector('#storage-status');
+  const unloadStatus = document.querySelector('#unload-status');
+  const clipboardStatus = document.querySelector('#clipboard-status');
+  const buttons = Object.fromEntries([...document.querySelectorAll('button')].map((button) => [button.id, button]));
+  let current = null;
+
+  function updateClipboardStatus() {
+    const state = current;
+    if (!state) return;
+    const pending = state.copies.filter((copy) => copy.state === 'pending');
+    buttons['resolve-first'].disabled = pending.length === 0;
+    buttons['resolve-latest'].disabled = pending.length === 0;
+    clipboardStatus.textContent = `Clipboard: ${state.clipboardMocked ? 'deferred; native share disabled' : 'original behavior'}. Calls: ${state.copies.length}. Pending: ${pending.length}. Resolved: ${state.copies.filter((copy) => copy.state === 'resolved').length}.` +
+      (state.copies.length ? '\n' + state.copies.map((copy) => `Copy #${copy.id}: ${copy.state} (${copy.length} characters)`).join('\n') : '');
+  }
+
+  function restoreProperty(object, key, descriptor) {
+    if (descriptor) Object.defineProperty(object, key, descriptor);
+    else delete object[key];
+  }
+
+  function restoreClipboard(state) {
+    if (!state?.clipboardMocked) return;
+    restoreProperty(state.win.navigator, 'share', state.shareDescriptor);
+    restoreProperty(state.win.navigator, 'clipboard', state.clipboardDescriptor);
+    state.clipboardMocked = false;
+    for (const copy of state.copies) {
+      if (copy.state !== 'pending') continue;
+      copy.state = 'cancelled';
+      copy.reject(new state.win.DOMException('Development mock restored.', 'AbortError'));
+    }
+  }
+
+  function restoreAll(state) {
+    if (!state) return;
+    state.failWrites = false;
+    Object.defineProperty(state.win.Storage.prototype, 'setItem', state.setItemDescriptor);
+    restoreClipboard(state);
+  }
+
+  frame.addEventListener('load', () => {
+    restoreAll(current);
+    const win = frame.contentWindow;
+    const setItemDescriptor = Object.getOwnPropertyDescriptor(win.Storage.prototype, 'setItem');
+    const state = {
+      win, setItemDescriptor, failWrites: false, failedWrites: 0, clipboardMocked: false,
+      shareDescriptor: Object.getOwnPropertyDescriptor(win.navigator, 'share'),
+      clipboardDescriptor: Object.getOwnPropertyDescriptor(win.navigator, 'clipboard'),
+      copies: [],
+    };
+    current = state;
+    Object.defineProperty(win.Storage.prototype, 'setItem', {
+      ...setItemDescriptor,
+      value: function (key, value) {
+        if (state.failWrites && this === win.localStorage && String(key) === storageKey) {
+          state.failedWrites += 1;
+          storageStatus.textContent = `Writes: forced failure. Failed save attempts: ${state.failedWrites}.`;
+          throw new win.DOMException('Development-only save failure.', 'QuotaExceededError');
+        }
+        return setItemDescriptor.value.call(this, key, value);
+      },
+    });
+    win.addEventListener('pagehide', () => restoreAll(state), { once: true });
+    for (const button of Object.values(buttons)) button.disabled = false;
+    storageStatus.textContent = 'Writes: normal. Failed save attempts: 0.';
+    unloadStatus.textContent = 'Unload guard: not checked.';
+    updateClipboardStatus();
+    status.textContent = 'App ready. Test controls are attached only to this frame.';
+  });
+
+  buttons['fail-writes'].onclick = () => {
+    current.failWrites = true;
+    storageStatus.textContent = `Writes: forced failure. Failed save attempts: ${current.failedWrites}.`;
+  };
+  buttons['restore-writes'].onclick = () => {
+    current.failWrites = false;
+    storageStatus.textContent = `Writes: restored. Failed save attempts: ${current.failedWrites}. Press Retry in the app to save pending changes.`;
+  };
+  buttons['check-unload'].onclick = () => {
+    const event = new current.win.Event('beforeunload', { cancelable: true });
+    current.win.dispatchEvent(event);
+    unloadStatus.textContent = `beforeunload defaultPrevented: ${event.defaultPrevented}.`;
+  };
+  buttons['defer-clipboard'].onclick = () => {
+    const state = current;
+    if (state.clipboardMocked) return;
+    Object.defineProperty(state.win.navigator, 'share', { configurable: true, value: undefined });
+    Object.defineProperty(state.win.navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText(text) {
+          return new Promise((resolve, reject) => {
+            state.copies.push({ id: state.copies.length + 1, length: String(text).length, state: 'pending', resolve, reject });
+            updateClipboardStatus();
+          });
+        },
+      },
+    });
+    state.clipboardMocked = true;
+    updateClipboardStatus();
+  };
+  function resolveCopy(latest) {
+    const pending = current.copies.filter((copy) => copy.state === 'pending');
+    const copy = latest ? pending.at(-1) : pending[0];
+    if (!copy) return;
+    copy.state = 'resolved';
+    copy.resolve();
+    updateClipboardStatus();
+  }
+  buttons['resolve-first'].onclick = () => resolveCopy(false);
+  buttons['resolve-latest'].onclick = () => resolveCopy(true);
+  buttons['restore-clipboard'].onclick = () => {
+    restoreClipboard(current);
+    updateClipboardStatus();
+  };
+  window.addEventListener('pagehide', () => restoreAll(current), { once: true });
+</script>
+</html>
