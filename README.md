@@ -89,18 +89,18 @@ npm run preview
 
 ## الهوية وأيقونة التطبيق
 
-اسم التطبيق وعنوان الصفحة وmetadata وManifest هو **Pocket Notes**. الصورة المقدمة محفوظة دون تغيير في `assets/branding/pocket-notes-original.png`، بمقاس **1254 × 1254** وصيغة PNG شفافة.
+اسم التطبيق وعنوان الصفحة وmetadata وManifest هو **Pocket Notes**. الشعار البني والذهبي المقدم في `PocketNotes.png` محفوظ دون تغيير في `assets/branding/pocket-notes-original.png`، بمقاس **1254 × 1254** وصيغة PNG شفافة.
 
 الأصول الجاهزة داخل المشروع:
 
 | الأصل | الاستخدام |
 | --- | --- |
-| `public/favicon.ico` | أيقونة المتصفح بمقاسات 16 و32 و48 داخل ملف واحد |
-| `public/icons/favicon-16.png` و`favicon-32.png` و`favicon-48.png` | نسخ PNG لمقاسات favicon |
-| `public/icons/apple-touch-icon.png` | أيقونة شاشة رئيسية بمقاس 180 × 180 وخلفية معتمة |
-| `public/icons/icon-192.png` و`icon-512.png` | أيقونات PWA العامة بمقاسي 192 و512 |
-| `public/icons/icon-maskable-192.png` و`icon-maskable-512.png` | أيقونات maskable بخلفية معتمة ومساحة آمنة حول كامل الصورة |
-| `public/manifest.webmanifest` | تعريف الاسم ونطاق التشغيل والأيقونات والتشغيل المستقل |
+| `public/icons/v2/favicon.ico` | أيقونة المتصفح بمقاسات 16 و32 و48 داخل ملف واحد |
+| `public/icons/v2/favicon-16.png` و`favicon-32.png` و`favicon-48.png` | نسخ PNG لمقاسات favicon |
+| `public/icons/v2/apple-touch-icon.png` | أيقونة شاشة رئيسية بمقاس 180 × 180 وخلفية معتمة |
+| `public/icons/v2/icon-192.png` و`icon-512.png` | أيقونات PWA العامة بمقاسي 192 و512 |
+| `public/icons/v2/icon-maskable-192.png` و`icon-maskable-512.png` | أيقونات maskable بخلفية معتمة ومساحة آمنة حول كامل الصورة |
+| `public/manifest-v2.webmanifest` | تعريف الاسم ونطاق التشغيل والأيقونات والتشغيل المستقل |
 
 تم اشتقاق الأيقونات بإعادة تحجيم الصورة الأصلية مع الحفاظ على نسبها وكامل محتواها. توضع الصورة في أيقونات maskable داخل دائرة الأمان المركزية، لحماية الرسم والاسم عند قص الأيقونة بواسطة النظام.
 
@@ -129,7 +129,7 @@ python3 -m venv .venv
 | `src/utils/storage.ts` | القراءة والكتابة وحماية البيانات التالفة أو الأحدث من تبويب آخر |
 | `src/utils/sharing.ts` | المشاركة والنسخ ومعالجة الإلغاء |
 | `src/main.tsx` | تشغيل React وتسجيل Service Worker داخل مسار التطبيق |
-| `index.html` و`public/manifest.webmanifest` | اسم التطبيق وmetadata وروابط الأيقونات وإعدادات PWA |
+| `index.html` و`public/manifest-v2.webmanifest` | اسم التطبيق وmetadata وروابط الأيقونات وإعدادات PWA |
 | `public/` | أيقونات التطبيق وmanifest وتراخيص المكونات المضمّنة |
 | `assets/branding/` | النسخة الأصلية من الصورة المقدمة |
 | `scripts/generate-icons.py` | أداة صيانة اختيارية لإعادة توليد الأيقونات |

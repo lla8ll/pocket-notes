@@ -4,7 +4,7 @@
 
 - **المستودع الفعلي:** https://github.com/lla8ll/pocket-notes — مستودع خاص.
 - رُفع المشروع كاملًا على `main`، بما فيه المصدر والأيقونات والاختبارات والتوثيق وإعداد GitHub Actions.
-- نسخة التطبيق المرفوعة: `947ac2663e091addeb60001642e3b3067763dcd4`؛ قد تليها تغييرات توثيق فقط.
+- نسخة التسليم الأول: `947ac2663e091addeb60001642e3b3067763dcd4`. تلاها تحديث الأيقونة إلى الشعار البني والذهبي من `PocketNotes.png`؛ يوضح سجل Git آخر تحديث.
 - البناء والاختبارات المحلية: 26 اختبار منطق + 10 اختبارات بناء ناجحة، وفحص الاعتماديات صفر ثغرات معروفة وقت التنفيذ.
 - [تشغيل فحص GitHub للنسخة المرفوعة](https://github.com/lla8ll/pocket-notes/actions/runs/34492311961): **نجح** التثبيت والاختبارات والبناء على خادم GitHub، وتُخطيت خطوة النشر كما هو مقصود.
 - نشر GitHub Pages غير مفعّل. المستودع ورفع المصدر لا يعنيان نشر موقع عام. تعليمات تفعيله اختيارياً موجودة في README.
@@ -17,8 +17,8 @@
 | الملفات | التغيير |
 | --- | --- |
 | `package.json`, `package-lock.json` | الاسم وتحديث Vite |
-| `index.html`, `public/manifest.webmanifest` | العنوان وmetadata وروابط الأيقونات |
-| `public/icons/`, `public/favicon.ico`, `assets/branding/` | الأيقونات الرسمية والمصدر المحفوظ |
+| `index.html`, `public/manifest-v2.webmanifest` | العنوان وmetadata وروابط الأيقونات |
+| `public/icons/v2/`, `assets/branding/` | الأيقونات الرسمية الجديدة، بما فيها favicon.ico، والمصدر المحفوظ |
 | `src/App.tsx`, `src/screens/NotesList.tsx`, `src/styles/classic.css` | هوية التطبيق ورأس القائمة دون إعادة تصميم |
 | `src/hooks/useNotes.ts` | حماية النص غير المحفوظ عند فشل التخزين |
 | `src/components/CopyNoteSheet.tsx` | تجاهل نتائج النسخ القديمة |

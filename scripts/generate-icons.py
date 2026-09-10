@@ -13,7 +13,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "assets/branding/pocket-notes-original.png"
-ICONS = ROOT / "public/icons"
+ICONS = ROOT / "public/icons/v2"
 BACKGROUND = (250, 248, 242, 255)
 
 
@@ -30,7 +30,7 @@ def main() -> None:
     ICONS.mkdir(parents=True, exist_ok=True)
     for size in (16, 32, 48):
         fitted(source, size).save(ICONS / f"favicon-{size}.png", optimize=True)
-    fitted(source, 256).save(ROOT / "public/favicon.ico", sizes=[(16, 16), (32, 32), (48, 48)])
+    fitted(source, 256).save(ICONS / "favicon.ico", sizes=[(16, 16), (32, 32), (48, 48)])
     fitted(source, 180, opaque=True).convert("RGB").save(ICONS / "apple-touch-icon.png", optimize=True)
     for size in (192, 512):
         fitted(source, size).save(ICONS / f"icon-{size}.png", optimize=True)

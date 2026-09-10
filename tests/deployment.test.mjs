@@ -6,7 +6,7 @@ import vm from 'node:vm';
 
 const dist = path.resolve('dist');
 const html = await readFile(path.join(dist, 'index.html'), 'utf8');
-const manifest = JSON.parse(await readFile(path.join(dist, 'manifest.webmanifest'), 'utf8'));
+const manifest = JSON.parse(await readFile(path.join(dist, 'manifest-v2.webmanifest'), 'utf8'));
 const worker = await readFile(path.join(dist, 'sw.js'), 'utf8');
 
 async function localFile(url, scope) {
@@ -94,7 +94,7 @@ for (const base of ['https://example.test/', 'https://example.test/pocket-notes/
         }
       }
     }
-    const manifestURL = new URL('manifest.webmanifest', scope);
+    const manifestURL = new URL('manifest-v2.webmanifest', scope);
     for (const field of ['id', 'scope', 'start_url']) assert.equal(new URL(manifest[field], manifestURL).href, scope.href);
     for (const icon of manifest.icons) await localFile(new URL(icon.src, manifestURL), scope);
     await localFile(new URL('sw.js', scope), scope);
@@ -109,8 +109,8 @@ test('deployed metadata and icon formats identify Pocket Notes', async () => {
   assert.ok(manifest.icons.some((icon) => icon.purpose === 'maskable'));
   const icons = [
     ...manifest.icons.map((icon) => [icon.src.replace(/^\.\//, ''), Number(icon.sizes.split('x')[0])]),
-    ['icons/apple-touch-icon.png', 180],
-    ...[16, 32, 48].map((size) => [`icons/favicon-${size}.png`, size]),
+    ['icons/v2/apple-touch-icon.png', 180],
+    ...[16, 32, 48].map((size) => [`icons/v2/favicon-${size}.png`, size]),
   ];
   for (const [file, size] of icons) {
     const bytes = await readFile(path.join(dist, file));
@@ -121,7 +121,7 @@ test('deployed metadata and icon formats identify Pocket Notes', async () => {
       assert.equal(bytes[25], 2, `Home-screen icons should have an opaque RGB canvas: ${file}`);
     }
   }
-  const favicon = await readFile(path.join(dist, 'favicon.ico'));
+  const favicon = await readFile(path.join(dist, 'icons/v2/favicon.ico'));
   assert.equal(favicon.readUInt16LE(0), 0);
   assert.equal(favicon.readUInt16LE(2), 1);
   assert.equal(favicon.readUInt16LE(4), 3);

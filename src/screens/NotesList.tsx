@@ -13,7 +13,7 @@ export function NotesList({ notes, total, deletedCount, query, onQueryChange, on
   const searching = query.trim().length > 0;
   return <>
     <ClassicNavigationBar title="Pocket Notes" headingRef={headingRef} left={
-      <img className="app-brand-icon" src={import.meta.env.BASE_URL + 'icons/icon-192.png'} alt="" width="40" height="40" />
+      <img className="app-brand-icon" src={import.meta.env.BASE_URL + 'icons/v2/icon-192.png'} alt="" width="40" height="40" />
     } right={
       <ClassicButton aria-label="New note" title="New note" onClick={onCreate} disabled={blocked}>
         <Icon name="plus" />
