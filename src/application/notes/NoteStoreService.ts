@@ -8,21 +8,28 @@ export class NoteStoreService {
 
   async load(): Promise<Note[]> {
     try {
-      return await this.repository.load();
-    } catch {
-      const legacyNotes = await this.legacy.load();
-      if (legacyNotes.length) {
-        await this.repository.save(legacyNotes);
-        return legacyNotes;
+      const notes = await this.repository.load();
+      if (notes.length === 0) {
+        const legacyNotes = await this.legacy.load();
+        if (legacyNotes.length) {
+          await this.repository.save(legacyNotes);
+          return legacyNotes;
+        }
       }
-      throw new Error('note-storage-unavailable');
+      return notes;
+    } catch {
+      try { return await this.legacy.load(); }
+      catch { throw new Error('note-storage-unavailable'); }
     }
   }
 
-  save(notes: Note[]): Promise<void> { return this.repository.save(notes); }
+  async save(notes: Note[]): Promise<void> {
+    try { await this.repository.save(notes); }
+    catch { await this.legacy.save(notes); }
+  }
 }
 
 export function createNoteStoreService(): NoteStoreService {
-  if (typeof indexedDB === 'undefined') throw new Error('indexeddb-unavailable');
+  if (typeof indexedDB === 'undefined') return new NoteStoreService(new LocalStorageNoteRepository());
   return new NoteStoreService(new IndexedDbNoteRepository());
 }
