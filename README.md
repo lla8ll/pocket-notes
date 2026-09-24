@@ -116,6 +116,26 @@ python3 -m venv .venv
 
 السكربت لا يعدّل الصورة الأصلية ولا يولّد تصميمًا جديدًا. احتفظ ببيئة Python المحلية خارج ملفات Git إذا استخدمت اسمًا مختلفًا عن `.venv`.
 
+## معماريّة v1.2
+
+تم فصل التخزين عن واجهة المستخدم لتسهيل التطوير والاختبار واستبدال قاعدة التخزين لاحقًا دون إعادة كتابة الشاشات. الطبقات الحالية:
+
+- `src/domain/notes/` — عقود المجال، ومنها `NoteRepository`.
+- `src/application/notes/` — خدمات التطبيق، ومنها `NoteStoreService` الذي يدير التحميل والترحيل وfallback.
+- `src/infrastructure/storage/` — تفاصيل التخزين الفعلية: IndexedDB والتوافق مع LocalStorage.
+- `src/hooks/` — ربط حالة React بخدمات التطبيق، وليس بتنفيذ IndexedDB مباشرة.
+- `src/screens/` و`src/components/` — طبقة العرض والتفاعل.
+- `src/utils/` — منطق ملاحظات نقي قابل للاختبار مثل التحقق والترتيب والبحث والاحتفاظ.
+
+### التخزين في v1.2
+
+- **IndexedDB** هو مخزن الملاحظات الأساسي، بدل الاعتماد على `localStorage` لكل محتوى الملاحظات.
+- عند الترقية، إذا كان IndexedDB فارغًا توجد ملاحظات قديمة في `classic-pocket-notes:v1`، تُرحّل إلى IndexedDB تلقائيًا.
+- تبقى نسخة LocalStorage القديمة دون حذف كمسار توافق احتياطي.
+- إذا تعذر IndexedDB، يعود التطبيق إلى LocalStorage بدل فقدان الملاحظات.
+- عمليات الحفظ تُسلسل داخل الخدمة لمنع سباقات الكتابة الناتجة عن التعديلات السريعة.
+- لا يتغير نموذج الملاحظة أو مدة سلة المحذوفات في هذه المرحلة؛ التغيير الأساسي هو فصل التخزين عن الواجهة.
+
 ## الملفات الأساسية
 
 | المسار | المسؤولية |
@@ -124,9 +144,9 @@ python3 -m venv .venv
 | `src/screens/` | القائمة والمحرر وسلة المحذوفات |
 | `src/components/` | الأزرار والأيقونات وصفوف الملاحظات ونوافذ التأكيد والنسخ |
 | `src/styles/classic.css` | التصميم الكلاسيكي والورق والاستجابة لأحجام الشاشة |
-| `src/hooks/useNotes.ts` | CRUD والحفظ التلقائي وتحديث الحالة وتنظيف المحذوفات |
+| `src/hooks/useNotes.ts` | حالة React وCRUD والحفظ التلقائي عبر خدمة التخزين |
 | `src/utils/notes.ts` | نموذج البيانات والترحيل والبحث والتثبيت والاحتفاظ |
-| `src/utils/storage.ts` | القراءة والكتابة وحماية البيانات التالفة أو الأحدث من تبويب آخر |
+| `src/domain/notes/NoteRepository.ts` | عقد التخزين المستقل عن التقنية |\n| `src/application/notes/NoteStoreService.ts` | خدمة التحميل والترحيل وfallback والحفظ |\n| `src/infrastructure/storage/IndexedDbNoteRepository.ts` | التخزين الأساسي في IndexedDB |\n| `src/infrastructure/storage/LocalStorageNoteRepository.ts` | مخزن التوافق والترحيل الاحتياطي |\n| `src/utils/storage.ts` | توافق واختبارات التخزين القديم عبر LocalStorage |
 | `src/utils/sharing.ts` | المشاركة والنسخ ومعالجة الإلغاء |
 | `src/main.tsx` | تشغيل React وتسجيل Service Worker داخل مسار التطبيق |
 | `index.html` و`public/manifest-v2.webmanifest` | اسم التطبيق وmetadata وروابط الأيقونات وإعدادات PWA |
@@ -149,6 +169,7 @@ python3 -m venv .venv
 
 ## البيانات القديمة وتغيير الرابط
 
+في v1.2 أصبحت البيانات الجديدة تُحفظ في IndexedDB. الملاحظات الموجودة في الإصدار السابق داخل `classic-pocket-notes:v1` تُكتشف وتُنقل تلقائيًا عند أول تشغيل بعد التحديث. لا تُحذف نسخة LocalStorage القديمة أثناء هذه الترقية، لتوفير مسار رجوع آمن.\n\n
 مفتاح التخزين بقي **`classic-pocket-notes:v1`**. صيغة البيانات هي `{ version: 2, notes: [...] }`، وتُقرأ صيغة الإصدار الأول أيضًا. حقول الملاحظة:
 
 ```ts
