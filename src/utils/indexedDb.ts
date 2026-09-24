@@ -1,5 +1,5 @@
 import type { Note } from './notes';
-const DB_NAME='pocket-notes';const DB_VERSION=1;const STORE='notes';
+const DB_NAME='pocket-notes';const DB_VERSION=2;const STORE='notes';
 function openDb(){return new Promise<IDBDatabase>((resolve,reject)=>{if(!('indexedDB'in window)){reject(new Error('indexeddb-unavailable'));return}const r=indexedDB.open(DB_NAME,DB_VERSION);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE))r.result.createObjectStore(STORE,{keyPath:'id'})};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error??new Error('indexeddb-open-failed'))})}
 export async function loadNotes(){try{const db=await openDb();return await new Promise<Note[]|null>((resolve,reject)=>{const r=db.transaction(STORE,'readonly').objectStore(STORE).getAll();r.onsuccess=()=>resolve(r.result.length?r.result as Note[]:null);r.onerror=()=>reject(r.error)})}catch{return null}}
 export async function saveNotes(notes:Note[]){const db=await openDb();await new Promise<void>((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite'),s=tx.objectStore(STORE);s.clear();for(const n of notes)s.put(n);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error??new Error('indexeddb-write-failed'))})}
