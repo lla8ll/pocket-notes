@@ -18,8 +18,10 @@ export function useNotes(){
  const createNote=useCallback(()=>{if(blocked.current)return null;const timestamp=new Date().toISOString();const id=typeof crypto.randomUUID==='function'?crypto.randomUUID():Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');const note:Note={id,content:'',createdAt:timestamp,updatedAt:timestamp,deletedAt:null,isPinned:false,isFavorite:false,folder:'',tags:[],attachments:[]};act({type:'create',note});return note},[act]);
  const updateNote=useCallback((id:string,content:string)=>act({type:'edit',id,content}),[act]);
  const updateMetadata=useCallback((id:string,folder:string,tags:string[],isFavorite:boolean)=>act({type:'metadata',id,folder,tags,isFavorite}),[act]);
+ const updateAttachments=useCallback((id:string,attachments:Note['attachments'])=>{const note=current.current.find(n=>n.id===id);if(note)commit(current.current.map(n=>n.id===id?{...n,attachments}:n))},[commit]);
+ const importNotes=useCallback((incoming:Note[])=>{const normalized=incoming.map(n=>({...n,id:n.id||crypto.randomUUID(),deletedAt:null,isFavorite:n.isFavorite??false,folder:n.folder??'',tags:n.tags??[],attachments:n.attachments??[]}));const ids=new Set(current.current.map(n=>n.id));commit([...current.current,...normalized.filter(n=>!ids.has(n.id))])},[commit]);
  const deleteNote=useCallback((id:string)=>act({type:'delete',id}),[act]);const recoverNote=useCallback((id:string)=>act({type:'recover',id}),[act]);const permanentlyDeleteNote=useCallback((id:string)=>act({type:'destroy',id}),[act]);const togglePin=useCallback((id:string)=>act({type:'pin',id}),[act]);
  const retrySave=useCallback(()=>blocked.current?refresh():commit(current.current),[commit,refresh]);
  const active=useMemo(()=>activeNotes(notes),[notes]);const deleted=useMemo(()=>deletedNotes(notes,now),[notes,now]);
- return{notes,active,deleted,now,createNote,updateNote,updateMetadata,deleteNote,recoverNote,permanentlyDeleteNote,togglePin,storageError,retrySave,storageBlocked};
+ return{notes,active,deleted,now,createNote,updateNote,updateMetadata,updateAttachments,importNotes,deleteNote,recoverNote,permanentlyDeleteNote,togglePin,storageError,retrySave,storageBlocked};
 }
