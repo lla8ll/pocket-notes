@@ -1,5 +1,5 @@
-import {getTitle,type Note} from './notes';
+import {decodeNotes,getTitle,type Note} from './notes';
 export function exportJson(notes:Note[]){return new Blob([JSON.stringify({version:3,exportedAt:new Date().toISOString(),notes},null,2)],{type:'application/json'})}
 export function exportMarkdown(notes:Note[]){const text=notes.filter(n=>n.deletedAt===null).map(n=>`# ${getTitle(n.content)}\n\n${n.folder?'> folder: '+n.folder+'\n\n':''}${n.tags.length?'> tags: '+n.tags.join(', ')+'\n\n':''}${n.content}\n`).join('\n---\n\n');return new Blob([text],{type:'text/markdown;charset=utf-8'})}
-export async function importJson(file:File){const raw=await file.text();const parsed=JSON.parse(raw) as {notes?:unknown};if(!Array.isArray(parsed.notes))throw new Error('Invalid Pocket Notes export.');return parsed.notes as Note[]}
+export async function importJson(file:File){const raw=await file.text();const parsed=JSON.parse(raw) as {notes?:unknown};if(!Array.isArray(parsed.notes))throw new Error('Invalid Pocket Notes export.');return decodeNotes(JSON.stringify({version:3,notes:parsed.notes}))}
 export function downloadBlob(blob:Blob,filename:string){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
