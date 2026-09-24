@@ -6,7 +6,7 @@ import type { Note } from '../src/utils/notes.ts';
 import { readNotebook, writeNotebook } from '../src/utils/storage.ts';
 import { copyNote, shareNote } from '../src/utils/sharing.ts';
 
-const first: Note = { id: 'a', content: 'First\nA second line', createdAt: '2026-09-09T09:00:00Z', updatedAt: '2026-09-09T09:00:00Z', deletedAt: null, isPinned: false };
+const first: Note = { id: 'a', content: 'First\nA second line', createdAt: '2026-09-09T09:00:00Z', updatedAt: '2026-09-09T09:00:00Z', deletedAt: null, isPinned: false, isFavorite: false, folder: '', tags: [], attachments: [] };
 const second: Note = { id: 'b', content: 'Second', createdAt: '2026-09-09T10:00:00Z', updatedAt: '2026-09-09T10:00:00Z', deletedAt: null, isPinned: false };
 
 test('a first visit and a saved empty notebook are distinct valid states', () => {
@@ -77,13 +77,13 @@ test('v1 migration preserves every original field, unknown metadata and whitespa
   const loaded = readNotebook(storage, now);
   assert.equal(storage.value, raw);
   assert.equal(loaded.needsWrite, true);
-  assert.deepEqual(loaded.notes, [{ ...legacy, deletedAt: null, isPinned: false }]);
+  assert.deepEqual(loaded.notes, [{ ...legacy, deletedAt: null, isPinned: false, isFavorite: false, folder: '', tags: [], attachments: [] }]);
   writeNotebook(storage, loaded.notes, loaded.raw);
   assert.equal(storage.writes, 1);
   const reloaded = readNotebook(storage, now);
   assert.deepEqual(reloaded.notes, loaded.notes);
   assert.equal(reloaded.needsWrite, false);
-  assert.equal(JSON.parse(storage.value!).version, 2);
+  assert.equal(JSON.parse(storage.value!).version, 3);
 });
 
 test('migration write failure leaves the entire original payload intact', () => {
@@ -126,6 +126,9 @@ test('missing new fields default safely and invalid explicit fields are rejected
     const [note] = decodeNotes(JSON.stringify({ version, notes: [old] }));
     assert.equal(note.deletedAt, null);
     assert.equal(note.isPinned, false);
+    assert.equal(note.isFavorite, false);
+    assert.equal(note.folder, '');
+    assert.deepEqual(note.tags, []);
   }
   for (const extra of [{ deletedAt: 'invalid' }, { isPinned: 'false' }, { deletedAt: 123 }]) {
     assert.throws(() => decodeNotes(JSON.stringify({ version: 2, notes: [{ ...old, ...extra }] })));
