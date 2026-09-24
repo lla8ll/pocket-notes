@@ -1,9 +1,9 @@
 {
   "name": "pocket-notes",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
-  "description": "Pocket Notes: a classic yellow-paper notebook with local saving, search, pins, sharing, offline access and 30-day recovery.",
+  "description": "Pocket Notes: a classic yellow-paper notebook with IndexedDB persistence, local migration, search, pins, sharing, offline access and 30-day recovery.",
   "engines": {
     "node": ">=22.18.0"
   },
