@@ -1,6 +1,6 @@
-import type { Note } from '../../utils/notes';
-import { decodeNotes, encodeNotes, purgeExpired, STORAGE_KEY } from '../../utils/notes';
-import type { NoteRepository } from '../../domain/notes/NoteRepository';
+import type { Note } from '../../utils/notes.ts';
+import { decodeNotes, encodeNotes, purgeExpired, STORAGE_KEY } from '../../utils/notes.ts';
+import type { NoteRepository } from '../../domain/notes/NoteRepository.ts';
 
 export class LocalStorageNoteRepository implements NoteRepository {
   async load(): Promise<Note[]> {

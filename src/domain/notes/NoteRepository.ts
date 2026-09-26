@@ -1,4 +1,4 @@
-import type { Note } from '../../utils/notes';
+import type { Note } from '../../utils/notes.ts';
 
 export interface NoteRepository {
   load(): Promise<Note[]>;

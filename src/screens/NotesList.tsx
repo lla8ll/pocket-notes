@@ -1,24 +1,26 @@
 import { useRef } from 'react';
-import type { Ref } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { ClassicButton, ClassicNavigationBar, Icon } from '../components/ClassicControls';
 import { NoteListItem } from '../components/NoteListItem';
 import type { Note } from '../utils/notes';
+import brandIcon from '../../public/icons/v2/icon-192.png';
 
-export function NotesList({ notes, total, deletedCount, query, onQueryChange, onCreate, onOpen, onDeleted, blocked, headingRef }: {
+export function NotesList({ notes, total, deletedCount, query, onQueryChange, onCreate, onOpen, onDeleted, blocked, headingRef, syncSlot }: {
   notes: Note[]; total: number; deletedCount: number; query: string; onQueryChange: (query: string) => void;
   onCreate: () => void; onOpen: (note: Note) => void; onDeleted: () => void; blocked: boolean;
-  headingRef: Ref<HTMLHeadingElement>;
+  headingRef: Ref<HTMLHeadingElement>; syncSlot?: ReactNode;
 }) {
   const search = useRef<HTMLInputElement>(null);
   const searching = query.trim().length > 0;
   return <>
     <ClassicNavigationBar title="Pocket Notes" headingRef={headingRef} left={
-      <img className="app-brand-icon" src={import.meta.env.BASE_URL + 'icons/v2/icon-192.png'} alt="" width="40" height="40" />
+      <img className="app-brand-icon" src={brandIcon} alt="" width="40" height="40" />
     } right={
       <ClassicButton aria-label="New note" title="New note" onClick={onCreate} disabled={blocked}>
         <Icon name="plus" />
       </ClassicButton>
     } />
+    {syncSlot && <div className="sync-strip">{syncSlot}</div>}
     <div className="notepad-binding" aria-hidden="true" />
     <div className="classic-search" role="search">
       <Icon name="search" />

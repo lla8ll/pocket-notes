@@ -1,6 +1,6 @@
-import type { Note } from '../../utils/notes';
-import { decodeNotes, encodeNotes, purgeExpired } from '../../utils/notes';
-import type { NoteRepository } from '../../domain/notes/NoteRepository';
+import type { Note } from '../../utils/notes.ts';
+import { decodeNotes, encodeNotes, purgeExpired } from '../../utils/notes.ts';
+import type { NoteRepository } from '../../domain/notes/NoteRepository.ts';
 
 const DB_NAME = 'pocket-notes';
 const DB_VERSION = 1;

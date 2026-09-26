@@ -14,7 +14,8 @@ class MemoryRepo implements NoteRepository {
 }
 
 class LegacyRepo implements NoteRepository {
-  constructor(private notes: Note[]) {}
+  notes: Note[];
+  constructor(notes: Note[]) { this.notes = notes; }
   async load() { return this.notes; }
   async save(notes: Note[]) { this.notes = notes; }
   async clear() { this.notes = []; }

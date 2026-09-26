@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { activeNotes, applyNoteAction, deletedNotes, purgeExpired } from '../utils/notes';
 import type { Note, NoteAction } from '../utils/notes';
 import { createNoteStoreService } from '../application/notes/NoteStoreService';
+import { mergeNotes } from '../cloud/merge';
 
 const store = createNoteStoreService();
 
@@ -18,11 +19,13 @@ export function useNotes() {
     let cancelled = false;
     store.load().then((loaded) => {
       if (cancelled) return;
-      current.current = loaded;
-      setNotes(loaded);
+      const cleaned = purgeExpired(loaded);
+      current.current = cleaned;
+      setNotes(cleaned);
       setLoading(false);
       setStorageBlocked(false);
       setStorageError('');
+      if (cleaned.length !== loaded.length) void store.save(cleaned);
     }).catch(() => {
       if (cancelled) return;
       setLoading(false);
@@ -59,10 +62,10 @@ export function useNotes() {
   }, [commit]);
 
   const act = useCallback((action: NoteAction) => {
-    if (loading) return;
+    if (loading || storageBlocked) return;
     const next = applyNoteAction(current.current, action);
     if (next !== current.current) commit(next);
-  }, [commit, loading]);
+  }, [commit, loading, storageBlocked]);
 
   const createNote = useCallback((): Note | null => {
     if (loading || storageBlocked) return null;
@@ -85,9 +88,18 @@ export function useNotes() {
     persist(current.current);
   }, [persist]);
 
+  const mergeExternal = useCallback((incoming: Note[]) => {
+    if (loading || storageBlocked || incoming.length === 0) return;
+    const merged = mergeNotes(current.current, incoming);
+    const changed = merged.length !== current.current.length ||
+      merged.some((note) => note !== current.current.find((local) => local.id === note.id));
+    if (changed) commit(merged);
+  }, [commit, loading, storageBlocked]);
+
+  const getCurrent = useCallback(() => current.current, []);
   const active = useMemo(() => activeNotes(notes), [notes]);
   const deleted = useMemo(() => deletedNotes(notes, now), [notes, now]);
-
   return { notes, active, deleted, now, createNote, updateNote, deleteNote, recoverNote,
-    permanentlyDeleteNote, togglePin, storageError, retrySave, storageBlocked: storageBlocked || loading };
+    permanentlyDeleteNote, togglePin, storageError, retrySave,
+    storageBlocked: storageBlocked || loading, mergeExternal, getCurrent };
 }

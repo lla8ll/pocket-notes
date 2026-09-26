@@ -1,10 +1,15 @@
-import type { Note } from '../../utils/notes';
-import type { NoteRepository } from '../../domain/notes/NoteRepository';
-import { IndexedDbNoteRepository } from '../../infrastructure/storage/IndexedDbNoteRepository';
-import { LocalStorageNoteRepository } from '../../infrastructure/storage/LocalStorageNoteRepository';
+import type { Note } from '../../utils/notes.ts';
+import type { NoteRepository } from '../../domain/notes/NoteRepository.ts';
+import { IndexedDbNoteRepository } from '../../infrastructure/storage/IndexedDbNoteRepository.ts';
+import { LocalStorageNoteRepository } from '../../infrastructure/storage/LocalStorageNoteRepository.ts';
 
 export class NoteStoreService {
-  constructor(private readonly repository: NoteRepository, private readonly legacy = new LocalStorageNoteRepository()) {}
+  private readonly repository: NoteRepository;
+  private readonly legacy: NoteRepository;
+  constructor(repository: NoteRepository, legacy: NoteRepository = new LocalStorageNoteRepository()) {
+    this.repository = repository;
+    this.legacy = legacy;
+  }
 
   async load(): Promise<Note[]> {
     try {

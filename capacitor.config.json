@@ -1,0 +1,9 @@
+{
+  "appId": "com.pocketnotes.app",
+  "appName": "Pocket Notes",
+  "webDir": "dist",
+  "ios": {
+    "contentInset": "automatic",
+    "backgroundColor": "#765033"
+  }
+}

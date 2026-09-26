@@ -396,3 +396,27 @@ button, h1, .toolbar, .note-date { -webkit-user-select: none; user-select: none;
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
 }
+
+/* --- Cloud sync: auth form, sync badge, account --- */
+.auth-form { padding: 24px 22px 28px; display: flex; flex-direction: column; gap: 14px; }
+.auth-form__lead { margin: 0 0 4px; font-size: .95rem; line-height: 1.45; color: #5f5334; text-shadow: 0 1px #fffa; }
+.auth-field { display: flex; flex-direction: column; gap: 5px; font-size: .85rem; color: #6a5c3b; text-shadow: 0 1px #fff8; }
+.auth-field input { min-height: 44px; padding: 0 12px; border: 1px solid #b09a52; border-radius: 7px; background: #fffef6; color: #29251d; font-size: 1rem; box-shadow: inset 0 1px 2px #0000001a; }
+.auth-field input:focus-visible { outline: 3px solid #3269a2; outline-offset: -1px; }
+.auth-form__message { margin: 0; padding: 9px 11px; border-radius: 6px; background: #f4e2ad; color: #5a4413; font-size: .85rem; line-height: 1.4; border: 1px solid #c9a94e; }
+.auth-form .sheet-action { margin-top: 4px; }
+.auth-form__toggle, .auth-form__skip { align-self: center; min-height: 40px; padding: 4px 8px; background: transparent; border: none; color: #7a5a2f; font-size: .875rem; text-decoration: underline; text-underline-offset: 2px; }
+.auth-form__skip { color: #8a7a55; font-size: .8125rem; }
+
+.sync-strip { flex-shrink: 0; display: flex; justify-content: center; padding: 5px 12px 0; }
+.sync-badge { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 3px 11px; border: 1px solid #b6a25c; border-radius: 999px; background: #f2dd90; color: #5f5334; font-size: .78rem; text-shadow: 0 1px #fff9; box-shadow: inset 0 1px #fff8; }
+.sync-badge__dot { width: 8px; height: 8px; border-radius: 50%; background: #9c8a55; box-shadow: 0 0 0 1px #0002 inset; }
+.sync-badge--idle .sync-badge__dot { background: #4a9a52; }
+.sync-badge--syncing .sync-badge__dot { background: #d0a13a; animation: sync-pulse 1s ease-in-out infinite; }
+.sync-badge--offline .sync-badge__dot { background: #9c8a55; }
+.sync-badge--error .sync-badge__dot { background: #c0503f; }
+.sync-badge:active { filter: brightness(.94); }
+@keyframes sync-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
+.account-email { font-weight: bold; word-break: break-all; }
+.account-status { color: #3a414c; }

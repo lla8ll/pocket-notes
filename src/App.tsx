@@ -9,12 +9,25 @@ import { RecentlyDeleted } from './screens/RecentlyDeleted';
 import { activeNotes } from './utils/notes';
 import type { Note } from './utils/notes';
 import { shareNote } from './utils/sharing';
+import { SignIn } from './screens/SignIn';
+import { AccountSheet } from './components/AccountSheet';
+import { SyncBadge } from './components/SyncBadge';
+import { useAuth } from './cloud/useAuth';
+import { useCloudSync } from './cloud/useCloudSync';
+import { nativeShare, tapFeedback, successFeedback } from './cloud/native';
 
 type ListScreen = 'list' | 'deleted';
 
 export default function App() {
   const { notes, active, deleted, now, createNote, updateNote, deleteNote, recoverNote,
-    permanentlyDeleteNote, togglePin, storageError, storageBlocked, retrySave } = useNotes();
+    permanentlyDeleteNote, togglePin, storageError, storageBlocked, retrySave,
+    mergeExternal, getCurrent } = useNotes();
+  const auth = useAuth();
+  const [skippedAuth, setSkippedAuth] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const { status: syncStatus, online } = useCloudSync({
+    userId: auth.userId, getCurrent, mergeExternal, localChangeKey: notes,
+  });
   const [activeId, setActiveId] = useState<string | null>(null);
   const [screen, setScreen] = useState<ListScreen | 'editor'>('list');
   const [editorSource, setEditorSource] = useState<ListScreen>('list');
@@ -92,6 +105,7 @@ export default function App() {
       }
     });
     if (created) {
+      void tapFeedback();
       editor.current?.focus({ preventScroll: true });
       editor.current?.setSelectionRange(0, 0);
       if (editor.current) editor.current.scrollTop = 0;
@@ -144,10 +158,25 @@ export default function App() {
     if (!activeNote || activeNote.deletedAt !== null || sharing) return;
     const request = ++shareRequest.current;
     setSharing(true);
-    const result = await shareNote(activeNote.content, navigator);
+    void tapFeedback();
+    // Prefer the native iOS share sheet; fall back to Web Share, then copy.
+    const native = await nativeShare(activeNote.content);
+    const result = native === 'shared' ? 'shared' : await shareNote(activeNote.content, navigator);
     if (shareRequest.current !== request) return;
     setSharing(false);
     if (result === 'copy') setCopyOpen(true);
+  }
+
+  // Gate the app behind sign-in only when cloud sync is configured and the
+  // user has neither signed in nor chosen to continue offline.
+  const showSignIn = auth.cloudEnabled && auth.ready && !auth.userId && !skippedAuth;
+  if (showSignIn) {
+    return <div className="desktop-surface">
+      <main className="notes-app" aria-label="Pocket Notes">
+        <SignIn onSignIn={auth.signIn} onSignUp={auth.signUp} onSkip={() => setSkippedAuth(true)}
+          error={auth.error} busy={auth.busy} />
+      </main>
+    </div>;
   }
 
   return <div className="desktop-surface">
@@ -165,7 +194,9 @@ export default function App() {
       <div className={'screen-stack screen-stack--' + screen + ' editor-source--' + editorSource}>
         <section className="screen screen--list" aria-label="Notes list" aria-hidden={screen !== 'list'} inert={screen !== 'list'}>
           <NotesList notes={results} total={active.length} deletedCount={deleted.length} query={query} onQueryChange={setQuery}
-            onCreate={newNote} onOpen={openNote} onDeleted={() => showList('deleted')} blocked={storageBlocked} headingRef={listHeading} />
+            onCreate={newNote} onOpen={openNote} onDeleted={() => showList('deleted')} blocked={storageBlocked} headingRef={listHeading}
+            syncSlot={auth.cloudEnabled ? <SyncBadge status={syncStatus} online={online} signedIn={!!auth.userId}
+              onTap={() => setAccountOpen(true)} /> : null} />
         </section>
         <section className="screen screen--deleted" aria-label="Recently Deleted" aria-hidden={screen !== 'deleted'} inert={screen !== 'deleted'}>
           <RecentlyDeleted notes={deleted} now={now} onBack={() => showList()} onOpen={openNote} headingRef={deletedHeading} />
@@ -174,7 +205,7 @@ export default function App() {
           <NoteEditor note={activeNote} editorRef={editor} headingRef={editorHeading} editing={editing}
             onEditing={setEditing} onChange={updateNote} onBack={() => showList(editorSource)} onDone={finishEditing}
             onCreate={newNote} onDelete={() => { editor.current?.blur(); setConfirmation(activeNote?.deletedAt != null ? 'permanent' : 'move'); }}
-            onRecover={recover} onPin={() => { if (activeNote) togglePin(activeNote.id); }} onShare={() => { void share(); }}
+            onRecover={recover} onPin={() => { if (activeNote) { void successFeedback(); togglePin(activeNote.id); } }} onShare={() => { void share(); }}
             sharing={sharing} feedback={feedback} blocked={storageBlocked} now={now}
             count={editorNotes.length} position={editorNotes.findIndex((note) => note.id === activeId) + 1} />
         </section>
@@ -183,6 +214,10 @@ export default function App() {
         onCancel={() => setConfirmation(null)} onDelete={removeNote} />
       <CopyNoteSheet open={copyOpen} content={activeNote?.content ?? ''} onCancel={() => setCopyOpen(false)}
         onCopied={() => { setCopyOpen(false); setFeedback('Copied'); }} />
+      <AccountSheet open={accountOpen} email={auth.email} online={online} status={syncStatus}
+        onClose={() => setAccountOpen(false)}
+        onSignOut={() => { setAccountOpen(false); void auth.signOut(); }}
+        onSignIn={() => { setAccountOpen(false); setSkippedAuth(false); }} />
     </main>
   </div>;
 }
