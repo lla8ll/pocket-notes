@@ -5,13 +5,13 @@
   "type": "module",
   "description": "Pocket Notes with IndexedDB persistence, iOS/Capacitor support, optional Supabase sync, offline access and recovery.",
   "engines": {
-    "node": ">=22.18.0"
+    "node": ">=22.13.0"
   },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build && node scripts/build-offline.mjs",
     "preview": "vite preview",
-    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "test": "node --disable-warning=ExperimentalWarning --experimental-strip-types --test tests/*.test.ts",
     "test:build": "node --test tests/deployment.test.mjs",
     "check": "npm test && npm run build && npm run test:build"
   },
@@ -31,7 +31,7 @@
     "react-dom": "19.1.1"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.5.2",
+    "@capacitor/cli": "^8.4.3",
     "@types/react": "19.1.13",
     "@types/react-dom": "19.1.9",
     "@vitejs/plugin-react": "5.0.2",
