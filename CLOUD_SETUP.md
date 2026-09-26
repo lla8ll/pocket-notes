@@ -2,7 +2,7 @@
 
 This build adds cloud sync (Supabase), native iOS features (share sheet,
 haptics, network awareness), and an offline-first sync layer on top of the
-original localStorage notes app. The app still works fully offline with no
+current IndexedDB-first notes app, with LocalStorage migration fallback. The app still works fully offline with no
 configuration — cloud sync activates only when Supabase keys are present.
 
 ## 1. Supabase setup (for cloud sync)
@@ -60,8 +60,9 @@ In Xcode: select a Team under **Signing & Capabilities**, then
 
 ## How sync works
 
-Offline-first. Notes are always written to localStorage first (unchanged from
-the original). When signed in and online, the sync layer pulls remote notes,
+Offline-first. Notes are always written to the local device first through the IndexedDB
+storage service, with the legacy LocalStorage repository used for migration
+and fallback. When signed in and online, the sync layer pulls remote notes,
 merges them with local using **last-write-wins on `updatedAt`**, pushes the
 merged set back, and subscribes to realtime changes from other devices. On
 reconnect it resyncs automatically. Conflicts never lose data silently — the
